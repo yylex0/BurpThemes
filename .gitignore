@@ -1,0 +1,4 @@
+build/
+backups/
+__pycache__/
+*.py[cod]
