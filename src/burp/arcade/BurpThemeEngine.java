@@ -54,6 +54,8 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
@@ -101,7 +103,6 @@ final class BurpThemeEngine
 {
     private static final int MAX_THEME_COMPONENTS_PER_PASS = 25000;
     private static final int MAX_THEME_DEPTH = 256;
-    private static final long FOCUS_REFRESH_THROTTLE_NANOS = 700_000_000L;
     private static final String PROXY_FORWARD_ACTION = "forward";
     private static final String PROXY_DROP_ACTION = "drop";
     private static final String PROXY_PILL_BUTTON_PROPERTY = "burptheme.proxyPillButton";
@@ -274,7 +275,10 @@ final class BurpThemeEngine
         {
             return 0;
         }
-        boolean wallpaperBacked = installBurpBackground(window, theme);
+        // Heavyweight popups (context menus, tooltips, combo dropdowns) are JWindows. Painting
+        // a wallpaper behind a small popup just shows a mis-cropped dark corner, so keep them as
+        // clean uniform tinted glass. Real dialogs are JDialogs and still get the wallpaper.
+        boolean wallpaperBacked = window instanceof JDialog && installBurpBackground(window, theme);
         int themed = 0;
         Set<Component> visited = Collections.newSetFromMap(new IdentityHashMap<>());
         if (window instanceof RootPaneContainer)
@@ -470,7 +474,7 @@ final class BurpThemeEngine
             "Table.foreground", theme.text,
             "Table.selectionBackground", selection,
             "Table.selectionForeground", theme.buttonText,
-            "Table.selectionInactiveBackground", alpha(theme.accent, 48),
+            "Table.selectionInactiveBackground", alpha(theme.button, 130),
             "Table.selectionInactiveForeground", theme.text,
             "Table.focusCellBackground", textSurface,
             "Table.focusCellForeground", theme.text,
@@ -492,7 +496,7 @@ final class BurpThemeEngine
             "Tree.textForeground", theme.text,
             "Tree.selectionBackground", selection,
             "Tree.selectionForeground", theme.buttonText,
-            "Tree.selectionInactiveBackground", alpha(theme.accent, 48),
+            "Tree.selectionInactiveBackground", alpha(theme.button, 130),
             "Tree.selectionInactiveForeground", theme.text,
             "Tree.selectionBorderColor", theme.accent,
             "Tree.hash", transparent(theme.accent),
@@ -507,7 +511,7 @@ final class BurpThemeEngine
             "List.foreground", theme.text,
             "List.selectionBackground", selection,
             "List.selectionForeground", theme.buttonText,
-            "List.selectionInactiveBackground", alpha(theme.accent, 48),
+            "List.selectionInactiveBackground", alpha(theme.button, 130),
             "List.selectionInactiveForeground", theme.text,
             "TextArea.background", textSurface,
             "TextArea.foreground", theme.text,
@@ -657,6 +661,14 @@ final class BurpThemeEngine
             "ToggleButton.borderColor", alpha(theme.accent, 120),
             "ToggleButton.disabledBorderColor", alpha(theme.accent, 72),
             "ToggleButton.select", theme.horizon,
+            "Switch.thumbColor", theme.text,
+            "Switch.selectedThumbColor", theme.buttonText,
+            "Switch.trackColor", alpha(theme.muted, 90),
+            "Switch.selectedTrackColor", opaque(theme.accent),
+            "Switch.borderColor", alpha(theme.accent, 120),
+            "Switch.selectedBorderColor", alpha(theme.gold, 150),
+            "Switch.disabledThumbColor", alpha(theme.muted, 120),
+            "Switch.disabledTrackColor", alpha(theme.muted, 50),
             "CheckBox.background", shell,
             "CheckBox.foreground", theme.text,
             "CheckBox.disabledText", theme.muted,
@@ -701,7 +713,7 @@ final class BurpThemeEngine
             "OptionPane.warningDialog.titlePane.foreground", theme.text,
             "OptionPane.errorDialog.titlePane.background", alpha(theme.base.darker(), 92),
             "OptionPane.errorDialog.titlePane.foreground", theme.text,
-            "PopupMenu.background", alpha(theme.base.darker(), 36),
+            "PopupMenu.background", alpha(mix(theme.base, theme.horizon, 0.25d), 232),
             "PopupMenu.foreground", theme.text,
             "PopupMenu.borderColor", border,
             "PopupMenu.separatorColor", alpha(theme.accent, 120),
@@ -927,25 +939,11 @@ final class BurpThemeEngine
                 }
                 if (isThemeableWindow(opened))
                 {
-                    if (eventId == WindowEvent.WINDOW_OPENED)
-                    {
-                        scheduleOpenedWindowThemeRefreshes(opened);
-                    }
-                    else
-                    {
-                        scheduleFocusedWindowThemeRefresh(opened);
-                    }
+                    scheduleOpenedWindowThemeRefreshes(opened);
                 }
                 else if (isThemeablePopupWindow(opened))
                 {
-                    if (eventId == WindowEvent.WINDOW_OPENED)
-                    {
-                        scheduleOpenedPopupThemeRefreshes(opened);
-                    }
-                    else
-                    {
-                        scheduleCoalescedPopupThemeRefresh(opened, 80);
-                    }
+                    scheduleOpenedPopupThemeRefreshes(opened);
                 }
                 return;
             }
@@ -1124,22 +1122,6 @@ final class BurpThemeEngine
         recentWindowThemeRefreshes.put(window, Long.valueOf(System.nanoTime()));
         scheduleWindowThemeRefresh(window, 0);
         scheduleCoalescedFrameThemeRefresh(window, 650);
-    }
-
-    private void scheduleFocusedWindowThemeRefresh(Window window)
-    {
-        if (window == null)
-        {
-            return;
-        }
-        long now = System.nanoTime();
-        Long lastRefresh = recentWindowThemeRefreshes.get(window);
-        if (lastRefresh != null && now - lastRefresh.longValue() < FOCUS_REFRESH_THROTTLE_NANOS)
-        {
-            return;
-        }
-        recentWindowThemeRefreshes.put(window, Long.valueOf(now));
-        scheduleCoalescedFrameThemeRefresh(window, 140);
     }
 
     private void scheduleOpenedPopupThemeRefreshes(Window window)
@@ -1832,22 +1814,23 @@ final class BurpThemeEngine
         }
         else if (component instanceof JToolTip)
         {
+            // Match the clean popup-menu language: a uniform theme-tinted slab + accent hairline.
             if (component instanceof JComponent)
             {
-                ((JComponent) component).setOpaque(!wallpaperBacked);
+                ((JComponent) component).setOpaque(true);
+                ((JComponent) component).setBorder(BorderFactory.createLineBorder(alpha(theme.accent, 60)));
             }
-            component.setBackground(wallpaperBacked ? alpha(theme.horizon.darker(), 96) : opaque(theme.horizon.darker()));
+            component.setBackground(opaque(mix(theme.base, theme.horizon, 0.25d)));
             component.setForeground(theme.text);
         }
         else if (component instanceof JPopupMenu)
         {
-            if (wallpaperBacked)
+            // Clean, uniform, theme-tinted slab (readability over wallpaper show-through for menus)
+            // plus a subtle accent hairline. makeSurface clears the glass border, so set it after.
+            makeSurface(component, alpha(mix(theme.base, theme.horizon, 0.25d), 230), theme.text);
+            if (component instanceof JComponent)
             {
-                makeWallpaperGlass(component, alpha(theme.base.darker(), 24), theme.text);
-            }
-            else
-            {
-                makeSurface(component, alpha(theme.base.darker(), 210), theme.text);
+                ((JComponent) component).setBorder(BorderFactory.createLineBorder(alpha(theme.accent, 60)));
             }
         }
         else if (component instanceof JMenuBar)
@@ -2242,6 +2225,29 @@ final class BurpThemeEngine
             header.setOpaque(!wallpaperBacked);
             header.setBackground(wallpaperBacked ? panelAlt : opaque(panelAlt));
             header.setForeground(theme.text);
+            wrapHeaderRenderers(header);
+        }
+    }
+
+    private void wrapHeaderRenderers(JTableHeader header)
+    {
+        TableCellRenderer defaultRenderer = header.getDefaultRenderer();
+        if (defaultRenderer != null && !(defaultRenderer instanceof BurpThemeHeaderRenderer))
+        {
+            header.setDefaultRenderer(new BurpThemeHeaderRenderer(defaultRenderer));
+        }
+        TableColumnModel columnModel = header.getColumnModel();
+        if (columnModel != null)
+        {
+            for (int index = 0; index < columnModel.getColumnCount(); index++)
+            {
+                TableColumn column = columnModel.getColumn(index);
+                TableCellRenderer columnRenderer = column.getHeaderRenderer();
+                if (columnRenderer != null && !(columnRenderer instanceof BurpThemeHeaderRenderer))
+                {
+                    column.setHeaderRenderer(new BurpThemeHeaderRenderer(columnRenderer));
+                }
+            }
         }
     }
 
@@ -2253,6 +2259,23 @@ final class BurpThemeEngine
             if (renderer != null && !(renderer instanceof BurpThemeTableRenderer))
             {
                 table.setDefaultRenderer(rendererType, new BurpThemeTableRenderer(renderer));
+            }
+        }
+        // Burp installs custom per-column renderers (e.g. the HTTP history table) that bypass the
+        // default-by-type renderers above and paint their own opaque background -> patchy black
+        // cells over the translucent table. Wrap those too so every populated cell follows the
+        // theme and the table reads as one uniform surface.
+        TableColumnModel columnModel = table.getColumnModel();
+        if (columnModel != null)
+        {
+            for (int index = 0; index < columnModel.getColumnCount(); index++)
+            {
+                TableColumn column = columnModel.getColumn(index);
+                TableCellRenderer columnRenderer = column.getCellRenderer();
+                if (columnRenderer != null && !(columnRenderer instanceof BurpThemeTableRenderer))
+                {
+                    column.setCellRenderer(new BurpThemeTableRenderer(columnRenderer));
+                }
             }
         }
     }
@@ -2339,7 +2362,9 @@ final class BurpThemeEngine
         {
             return opaque(surface);
         }
-        int alpha = Math.max(28, surface.getAlpha());
+        // Dense-text working surfaces (HTTP editors, tables, trees, lists) read clean and
+        // uniform with a high frost floor, while panels/chrome keep their low-alpha glass.
+        int alpha = Math.max(185, surface.getAlpha());
         return alpha(theme.base.darker(), alpha);
     }
 
@@ -2586,7 +2611,7 @@ final class BurpThemeEngine
     private void themeMenuItem(AbstractButton button, BurpTheme theme)
     {
         Color background = alpha(theme.base.darker(), 20);
-        Color selection = alpha(theme.button, 150);
+        Color selection = alpha(theme.button, 200);
         button.setOpaque(false);
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
@@ -3981,6 +4006,48 @@ final class BurpThemeEngine
             Component component = delegate.getTableCellRendererComponent(table, value, selected, focus, row, column);
             tintSelectionRenderer(component, selected, currentTheme, table.getSelectionBackground(), table.getBackground(), Collections.newSetFromMap(new IdentityHashMap<>()), 0, true);
             return component;
+        }
+    }
+
+    private final class BurpThemeHeaderRenderer implements TableCellRenderer
+    {
+        private final TableCellRenderer delegate;
+
+        private BurpThemeHeaderRenderer(TableCellRenderer delegate)
+        {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int column)
+        {
+            Component component = delegate.getTableCellRendererComponent(table, value, selected, focus, row, column);
+            // Clean, solid theme-tinted header bar (distinct from the translucent body) with light text.
+            Color background = opaque(mix(currentTheme.base, currentTheme.horizon, 0.5d));
+            tintHeaderRenderer(component, background, currentTheme.text, Collections.newSetFromMap(new IdentityHashMap<>()), 0, true);
+            return component;
+        }
+    }
+
+    private void tintHeaderRenderer(Component component, Color background, Color foreground, Set<Component> visited, int depth, boolean root)
+    {
+        if (component == null || depth > 12 || visited.contains(component))
+        {
+            return;
+        }
+        visited.add(component);
+        component.setBackground(background);
+        component.setForeground(foreground);
+        if (component instanceof JComponent)
+        {
+            ((JComponent) component).setOpaque(root);
+        }
+        if (component instanceof Container)
+        {
+            for (Component child : ((Container) component).getComponents())
+            {
+                tintHeaderRenderer(child, background, foreground, visited, depth + 1, false);
+            }
         }
     }
 
