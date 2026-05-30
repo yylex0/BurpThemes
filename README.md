@@ -1,10 +1,12 @@
 # BurpTheme
 
-BurpTheme is a Java extension for Burp Suite Community Edition that provides a dedicated theme interface and applies a consistent visual theme across Burp's Swing-based user interface.
+> A heavily customized theming engine for Burp Suite — wallpaper backgrounds, frosted-glass surfaces, and five hand-tuned themes that restyle the *entire* suite, not just the accent colors.
 
-The extension is designed for security professionals who use Burp Suite for long testing sessions and want a more readable, immersive, and consistent workspace. It also provides a small, maintainable codebase for developers who want to build additional Burp extension modules using the Montoya API.
+BurpTheme is a Java extension (Montoya API) that adds a dedicated theme gallery to Burp and applies a deep, consistent look across the whole Swing UI — Proxy, Repeater, Target, Intruder, tables, HTTP editors, menus, popups, tooltips, dialogs, and the window chrome. It runs on both Burp Suite **Community** and **Professional** (there is no edition-specific code; it themes Pro-only tools automatically).
 
-Author: Raghav Vivekanandan @ Ashtaksha Labs
+It is built for testers who spend long sessions in Burp and want a more readable, immersive, and consistent workspace — and as a small, maintainable Montoya codebase that other extension modules can build on.
+
+**Author:** Raghav Vivekanandan @ Ashtaksha Labs
 
 ## Overview
 
@@ -14,28 +16,29 @@ The extension focuses on presentation and workflow comfort. It does not intercep
 
 ## Key Capabilities
 
-- Friendly theme-gallery Burp tab for selecting available themes.
-- Suite-wide visual styling for Burp's Swing interface.
-- Broad theming of visible Swing `JFrame`, `JDialog`, and `JWindow` instances inside the Burp JVM.
-- Wallpaper rendering behind frame layered panes where transparency allows it.
-- Animated GIF card previews, high-detail wallpapers, avatars, and detail strips for every shipped theme.
-- Persistent selected theme and suite-wide toggle state through Montoya extension storage.
-- Styling for common Swing controls including tabs, buttons, tables, trees, lists, text areas, menus, popups, split panes, and scroll panes.
-- Reapply control for panels and windows that Burp creates after startup.
-- Controlled unload path that restores UI defaults, component state, listeners, timers, and wallpaper panels.
-- Small module interface for adding additional extension tabs or tools.
+- A theme-gallery tab (`BurpTheme`) with animated, wallpaper-backed cards for one-click theme switching.
+- Deep suite-wide theming: tabs, tables (cells **and** headers), trees, lists, text/HTTP editors, buttons, menus, popups, tooltips, dialogs, scroll bars, toggle switches, split panes, and the window title bar.
+- Wallpaper backgrounds rendered behind the suite with frosted-glass surfaces over them, while dense-text working areas (editors, tables) stay clean and readable.
+- Gradient-shaded "pill" buttons with theme-contrasting borders and clear hover/pressed states.
+- Five hand-tuned themes, each with its own wallpaper, avatar crest, animated GIF preview, detail strip, motion overlay, and color palette.
+- Works in Burp **Community and Professional** — Pro-only tools are themed automatically by a live component-tree pass.
+- Stable by design: no flicker/blink loops, coalesced refresh passes, and a clean unload path that restores Burp's original UI defaults, component state, listeners, timers, and wallpaper panels.
+- Selected theme and suite-wide toggle persist across restarts via Montoya extension storage.
+- A small module interface for building additional extension tabs/tools on top of the same engine.
 
 ## Included Themes
 
-BurpTheme currently ships with five heavily themed visual packs. The suite shell uses translucent glass panels over theme-specific artwork, while each theme varies the wallpaper, avatar, animated preview, detail strip, motion GIF overlay, accent colors, and atmosphere.
+BurpTheme ships with five heavily themed visual packs. The suite uses translucent glass panels over theme-specific artwork; each theme varies the wallpaper, avatar crest, animated preview, detail strip, motion overlay, accent/gold colors, and atmosphere. **Korok Forest loads by default** — switch any time from the `BurpTheme` tab.
 
-- `Great Plateau`: open-air plateau dusk using `assets/temple-overworld.png`, `assets/avatar-great-plateau.png`, `assets/preview-great-plateau.gif`, `assets/detail-great-plateau.png`, and `assets/motion-great-plateau.gif`.
-- `Hebra Snowfield`: snow-region blue alpine dusk using `assets/wallpaper-ancient-slate.png`, `assets/avatar-ancient-slate.png`, `assets/preview-ancient-slate.gif`, `assets/detail-ancient-slate.png`, and `assets/motion-ancient-slate.gif`. The stable slug remains `ancient-slate` for saved preference compatibility.
-- `Korok Forest`: soothing moss canopy using `assets/wallpaper-korok-forest.png`, `assets/avatar-korok-forest.png`, `assets/preview-korok-forest.gif`, `assets/detail-korok-forest.png`, and `assets/motion-korok-forest.gif`.
-- `Blood Moon`: red/black crimson ruins eclipse using `assets/wallpaper-blood-moon.png`, `assets/avatar-blood-moon.png`, `assets/preview-blood-moon.gif`, `assets/detail-blood-moon.png`, and `assets/motion-blood-moon.gif`.
-- `Gloom Depths`: purple depths/gloom theme using `assets/wallpaper-gloom-depths.png`, `assets/avatar-gloom-depths.png`, `assets/preview-gloom-depths.gif`, `assets/detail-gloom-depths.png`, and `assets/motion-gloom-depths.gif`.
+| Theme | Slug | Mood |
+| --- | --- | --- |
+| **Korok Forest** _(default)_ | `korok-forest` | moss canopy calm — green |
+| **Great Plateau** | `great-plateau` | wildlight plateau dusk — teal & gold |
+| **Hebra Snowfield** | `ancient-slate` | snow-blue alpine dusk — blue |
+| **Blood Moon** | `blood-moon` | crimson ruins eclipse — red |
+| **Gloom Depths** | `gloom-depths` | violet depths pulse — purple |
 
-Each theme defines its own wallpaper, avatar, animated preview, detail strip, motion GIF overlay, base, horizon, accent, gold, text, muted text, button, button text, and wallpaper opacity settings.
+Each theme's assets follow the `*-<slug>` naming in `assets/` — a wallpaper plus `avatar-`, `preview-` (GIF), `detail-`, and `motion-` (GIF) files. Hebra Snowfield keeps the stable slug `ancient-slate` for saved-preference compatibility. Each theme also defines its base, horizon, accent, gold, text, muted-text, button, and button-text colors plus wallpaper opacity.
 
 ## Operational Scope
 
@@ -57,8 +60,8 @@ Known boundaries:
 
 ## Requirements
 
-- Burp Suite Community Edition with a Montoya API that exposes `persistence().extensionData()` and suite tab registration.
-- Tested against the local standalone Burp Suite JAR with manifest `Implementation-Version: 41034`.
+- Burp Suite **Community or Professional** with a Montoya API that exposes `persistence().extensionData()` and suite tab registration.
+- Tested against current Burp Suite releases; the extension has no edition-specific code and uses only the public Montoya API.
 - Java compiler/runtime compatible with the installed Burp Suite build.
 - Java 17 is the default extension classfile target; set `JAVAC_RELEASE=21` only if you intentionally want Java 21-only output.
 - Python 3.9+ is required for theme registry validation during builds.
