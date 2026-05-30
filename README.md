@@ -4,7 +4,7 @@ BurpTheme is a Java extension for Burp Suite Community Edition that provides a d
 
 The extension is designed for security professionals who use Burp Suite for long testing sessions and want a more readable, immersive, and consistent workspace. It also provides a small, maintainable codebase for developers who want to build additional Burp extension modules using the Montoya API.
 
-Author: Raghav Vivekanandan
+Author: Raghav Vivekanandan @ Ashtaksha Labs
 
 ## Overview
 
@@ -433,4 +433,4 @@ Review focus areas:
 
 ## Attribution
 
-BurpTheme is authored by Raghav Vivekanandan.
+BurpTheme is authored by Raghav Vivekanandan at Ashtaksha Labs.

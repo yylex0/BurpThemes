@@ -51,6 +51,8 @@ $manifest = Join-Path $build "manifest.mf"
   "Burp-Extension-Class: burp.arcade.BurpThemeExtension",
   "Implementation-Title: BurpTheme",
   "Implementation-Version: 1.0.0",
+  "Implementation-Vendor: Ashtaksha Labs",
+  "Built-By: Raghav Vivekanandan @ Ashtaksha Labs",
   ""
 ) | Set-Content -Path $manifest -Encoding ascii
 
