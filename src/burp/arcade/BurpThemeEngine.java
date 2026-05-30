@@ -2871,7 +2871,7 @@ final class BurpThemeEngine
         {
             button.setUI(new ProxyPillButtonUI());
         }
-        button.setBorder(new RoundLineBorder(outline, 999, margin));
+        button.setBorder(new RoundLineBorder(outline, 12, margin));
         button.revalidate();
         button.repaint();
     }
@@ -2893,7 +2893,7 @@ final class BurpThemeEngine
         String disabledForeground = rgb(theme.muted);
         String border = rgb(alpha(theme.accent, 150));
         String disabledBorder = rgb(alpha(theme.muted, 120));
-        return "arc: 999"
+        return "arc: 12"
         + "; background: " + background
         + "; foreground: " + foreground
         + "; disabledBackground: " + disabledBackground
@@ -3421,7 +3421,7 @@ final class BurpThemeEngine
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 int w = Math.max(1, component.getWidth());
                 int h = Math.max(1, component.getHeight());
-                int arc = h;
+                int arc = Math.min(h, 12);
                 Color fill = proxyPillFill(button);
                 if (fill != null)
                 {
