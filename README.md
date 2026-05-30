@@ -434,6 +434,6 @@ Review focus areas:
 - Clear module boundaries for new features.
 - Packaged asset loading from the jar.
 
-## Attribution
+## Author
 
-BurpTheme is authored by Raghav Vivekanandan at Ashtaksha Labs.
+Raghav Vivekanandan @ Ashtaksha Labs.
