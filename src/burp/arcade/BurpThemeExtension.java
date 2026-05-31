@@ -7,12 +7,6 @@ import burp.api.montoya.persistence.PersistedObject;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,7 +47,6 @@ public class BurpThemeExtension implements BurpExtension
         selectTheme(currentTheme);
         scheduleStartupRefreshes();
         montoyaApi.logging().logToOutput("BurpTheme loaded");
-        writeSmokeMarker("initialized theme=" + currentTheme.slug + " suiteWide=" + suiteWideThemeEnabled);
     }
 
     private BurpThemeStorePanel createThemeStorePanel()
@@ -307,30 +300,6 @@ public class BurpThemeExtension implements BurpExtension
             BurpThemeStorePanel.clearImageCaches();
             BurpThemeEngine.clearBackgroundImageCache();
             ThemeCrestIcon.clearAvatarCache();
-            writeSmokeMarker("unloaded");
-        }
-    }
-
-    private void writeSmokeMarker(String event)
-    {
-        String markerPath = System.getProperty("burptheme.smokeMarker");
-        if (markerPath == null || markerPath.trim().isEmpty())
-        {
-            return;
-        }
-        try
-        {
-            Path path = Paths.get(markerPath);
-            Path parent = path.getParent();
-            if (parent != null)
-            {
-                Files.createDirectories(parent);
-            }
-            Files.write(path, (event + System.lineSeparator()).getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-        }
-        catch (IOException exception)
-        {
-            logError("BurpTheme smoke marker write failed", exception);
         }
     }
 }
