@@ -72,6 +72,14 @@ The project is intentionally simple and does not require Maven or Gradle.
 
 ## Build
 
+### Maven (used by the BApp Store build)
+
+```bash
+mvn package
+```
+
+Produces `target/arcade-burp-community.jar`. This is the build PortSwigger's BApp Store pipeline uses; it compiles the `src/` tree against the Montoya API (declared `provided` in `pom.xml`, so Burp supplies it at runtime) and packages `assets/` into the jar. No external runtime dependencies are bundled.
+
 ### Windows (PowerShell)
 
 On Windows, build with the bundled `build.ps1`. It compiles against the local Burp Suite install and packages the jar using a small `java.util.jar` helper (Burp's bundled JDK ships `javac` but not `jar.exe`), so no extra tooling is required:
@@ -437,3 +445,7 @@ Review focus areas:
 ## Author
 
 Raghav Vivekanandan @ Ashtaksha Labs.
+
+## License
+
+Released under the MIT License — see [`LICENSE`](LICENSE). © 2026 Raghav Vivekanandan / Ashtaksha Labs.
